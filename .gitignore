@@ -1,0 +1,9 @@
+# Ignora l'ambiente virtuale
+myenv/
+
+# Ignora file di cache di Python
+__pycache__/
+*.pyc
+
+# Eventuali file di log
+*.log
