@@ -18,7 +18,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 const Bar = dynamic(() => import('react-chartjs-2').then((mod) => mod.Bar), { ssr: false })
 
 export default function Home() {
-  // Stati per la sezione di upload e predizione
+  // Stati per upload, analisi e visualizzazione
   const [selectedFile, setSelectedFile] = useState(null)
   const [previewURL, setPreviewURL] = useState(null)
   const [emotionResult, setEmotionResult] = useState(null)
@@ -49,8 +49,8 @@ export default function Home() {
     }
     setLoading(true)
     setProgress(0)
-
-    // Inizia la simulazione della progress bar: incrementa di 5 ogni 300ms (20 * 300ms = 6000ms)
+    
+    // Simula progress bar: incrementa di 5 ogni 300ms per ~6 secondi
     let progressVal = 0
     const interval = setInterval(() => {
       progressVal += 5
@@ -60,24 +60,23 @@ export default function Home() {
       }
       setProgress(progressVal)
     }, 300)
+    
+    const formData = new FormData()
+    formData.append("file", selectedFile)
 
     try {
-      // Esegui la richiesta al backend
+      // Chiamata al backend
       const res = await fetch("http://localhost:8000/predict-emotion", {
         method: "POST",
-        body: (() => {
-          const fd = new FormData()
-          fd.append("file", selectedFile)
-          return fd
-        })(),
+        body: formData,
       })
       if (!res.ok) {
         const { error } = await res.json()
         throw new Error(error || "Errore nella predizione")
       }
       const data = await res.json()
-      
-      // Forza una pausa fino a che la progress bar raggiunge il 100%
+
+      // Attendi i 6 secondi di progress bar prima di mostrare i risultati
       setTimeout(() => {
         setEmotionResult(data.emotion)
         setProbabilities(data.probabilities)
@@ -106,77 +105,88 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Riconoscimento Emozioni</title>
+        <title>Emotion Detector</title>
         <meta name="description" content="Progetto Universitario - Riconoscimento Emozioni da immagini" />
       </Head>
-      <div className="min-h-screen flex flex-col font-jost">
-        {/* Header */}
-        <header className="bg-blue-600 text-white py-4 shadow-lg fixed top-0 left-0 right-0 z-50">
-          <div className="container mx-auto px-4 flex items-center justify-between">
-            <div className="text-2xl font-bold">EmotionProject</div>
-            <nav className="flex space-x-6">
-              <a href="#hero" className="hover:text-blue-300 transition duration-300">Home</a>
-              <a href="#upload" className="hover:text-blue-300 transition duration-300">Upload</a>
-              <a href="#about" className="hover:text-blue-300 transition duration-300">About</a>
-              <a href="#contact" className="hover:text-blue-300 transition duration-300">Contact</a>
-            </nav>
-          </div>
-        </header>
+      
+      {/* Header minimal */}
+      <header className="bg-white shadow-sm w-full py-4 px-6 flex items-center justify-between">
+        <div className="text-xl font-bold text-gray-800">Emotion Detector</div>
+        <nav className="flex space-x-6">
+          <a href="#home" className="text-gray-600 hover:text-gray-900 transition">Home</a>
+          <a href="#upload" className="text-gray-600 hover:text-gray-900 transition">Upload</a>
+          <a href="#pricing" className="text-gray-600 hover:text-gray-900 transition">Pricing</a>
+          <a href="#login" className="text-gray-600 hover:text-gray-900 transition">Login</a>
+        </nav>
+      </header>
 
-        {/* Hero Section */}
-        <section id="hero" className="w-full bg-gray-900 text-white py-20 px-4 mt-16">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between">
-            <div className="md:w-1/2 mb-8 md:mb-0 md:pr-8">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
-                Riconoscimento delle Emozioni
-              </h1>
-              <p className="text-lg md:text-xl text-gray-300 mb-6">
-                Analizza rapidamente un'immagine per scoprire quale emozione è espressa.
-                Sfruttiamo modelli di Deep Learning per garantire risultati affidabili e in tempo reale.
-              </p>
-              <a
-                href="#upload"
-                className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold transition transform hover:scale-105"
-              >
-                Inizia Ora
-              </a>
-            </div>
-            <div className="md:w-1/2 flex items-center justify-center">
-              <img
-                src="/hero_emotion.jpg"
-                alt="Emotion Recognition"
-                className="w-full max-w-md rounded-lg shadow-lg transform hover:scale-105 transition duration-300"
-              />
-            </div>
-          </div>
-        </section>
+      {/* Sezione "hero" con sfondo */}
+      <section
+        id="home"
+        className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-16 md:py-24 px-4 flex items-center justify-center"
+      >
+        <div className="max-w-5xl text-center">
+          <h1 className="text-4xl md:text-5xl font-extrabold mb-4">Deep Learning Emotion Detection</h1>
+          <p className="text-lg md:text-xl mb-8 text-white/90">
+            Identifica l'emozione espressa in un'immagine con la nostra IA avanzata.
+          </p>
+          <a
+            href="#upload"
+            className="bg-white text-purple-700 font-semibold px-6 py-3 rounded-full shadow hover:bg-gray-100 transition transform hover:scale-105"
+          >
+            Inizia Ora
+          </a>
+        </div>
+      </section>
 
-        {/* Upload Section */}
-        <section id="upload" className="w-full bg-white py-16 px-4">
-          <div className="max-w-7xl mx-auto flex flex-col items-center">
-            <h2 className="text-4xl font-bold mb-6 text-gray-800">Carica la Tua Immagine</h2>
-            <form onSubmit={handleSubmit} className="w-full max-w-lg flex flex-col items-center space-y-4">
+      {/* Sezione di upload: simile a "Be Protected..." stile */}
+      <section id="upload" className="w-full bg-white py-16 px-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between">
+          {/* Colonna Sinistra: testo / bullet points */}
+          <div className="md:w-1/2 mb-10 md:mb-0 md:pr-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 leading-tight">
+              Be Protected Against Emotional Misinterpretations
+            </h2>
+            <p className="text-gray-600 text-lg mb-6">
+              Carica un'immagine e verifica in tempo reale quale emozione viene espressa.
+              La nostra tecnologia sfrutta reti neurali e analisi facciale avanzata.
+            </p>
+            <ul className="list-disc list-inside text-gray-600 mb-6 space-y-2">
+              <li>Supporto a immagini di varie risoluzioni</li>
+              <li>Interfaccia semplice e veloce</li>
+              <li>Nessun costo nascosto: trasparenza garantita</li>
+            </ul>
+            <p className="text-gray-500 italic">
+              Un semplice upload e la nostra IA farà il resto.
+            </p>
+          </div>
+
+          {/* Colonna Destra: box upload */}
+          <div className="md:w-1/2 bg-gray-50 p-6 rounded-lg shadow-lg">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">Carica Immagine</h3>
+            
+            <form onSubmit={handleSubmit} className="flex flex-col items-start space-y-4">
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleFileChange}
-                className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="border border-gray-300 p-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-purple-600"
               />
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white px-6 py-3 rounded transform transition duration-300 hover:scale-105 hover:bg-blue-700"
+                className="bg-purple-600 text-white px-6 py-3 rounded w-full text-center font-semibold hover:bg-purple-700 transition transform hover:scale-105"
               >
-                Carica e Analizza
+                Analizza Ora
               </button>
             </form>
 
             {loading && (
-              <div className="w-full max-w-lg mt-6">
+              <div className="mt-6 w-full">
                 <div className="w-full bg-gray-200 rounded-full h-4">
                   <div
-                    className="bg-blue-600 h-4 rounded-full transition-all duration-300"
+                    className="bg-purple-600 h-4 rounded-full transition-all duration-300"
                     style={{ width: `${progress}%` }}
-                  ></div>
+                  />
                 </div>
                 <p className="text-center mt-2 text-gray-600">Analisi in corso... {progress}%</p>
               </div>
@@ -184,11 +194,12 @@ export default function Home() {
 
             {error && <p className="text-red-500 mt-4">{error}</p>}
 
-            {previewURL && (
-              <div className="mt-8 flex flex-col md:flex-row md:space-x-8 items-center">
+            {/* Se l'utente ha caricato un file e abbiamo un'anteprima */}
+            {previewURL && !loading && (
+              <div className="mt-8 flex flex-col md:flex-row md:space-x-6 items-center">
                 {/* Anteprima immagine */}
                 <div className="mb-6 md:mb-0">
-                  <h3 className="text-2xl font-semibold mb-2 text-gray-800">Anteprima Immagine</h3>
+                  <h4 className="text-lg font-semibold mb-2 text-gray-800">Anteprima</h4>
                   <img
                     src={previewURL}
                     alt="Anteprima"
@@ -197,13 +208,21 @@ export default function Home() {
                 </div>
                 {/* Risultato e grafico */}
                 {emotionResult && probabilities && (
-                  <div className="bg-white p-6 rounded shadow-lg">
-                    <h3 className="text-2xl font-semibold mb-4 text-gray-800">
-                      Emozione Predetta: {emotionResult}
-                    </h3>
+                  <div className="bg-white p-4 rounded shadow-lg">
+                    <h4 className="text-lg font-semibold mb-2 text-gray-800">Risultato</h4>
+                    <p className="mb-4 text-gray-700">Emozione: <strong>{emotionResult}</strong></p>
                     <div className="w-64 h-64">
                       <Bar
-                        data={chartData}
+                        data={{
+                          labels: ["Angry", "Disgust", "Fear", "Happy", "Neutral", "Sad", "Surprise"],
+                          datasets: [
+                            {
+                              label: "Probabilità",
+                              data: probabilities,
+                              backgroundColor: "rgba(59, 130, 246, 0.5)",
+                            },
+                          ],
+                        }}
                         options={{
                           responsive: true,
                           maintainAspectRatio: false,
@@ -219,23 +238,20 @@ export default function Home() {
               </div>
             )}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Footer */}
-        <footer id="contact" className="bg-blue-600 text-white py-6">
-          <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between">
-            <div className="mb-4 md:mb-0">
-              <h3 className="text-xl font-bold">EmotionProject</h3>
-              <p className="text-sm text-blue-200">Riconoscimento Facciale &copy; 2023</p>
-            </div>
-            <div className="flex space-x-4">
-              <a href="#privacy" className="text-blue-200 hover:text-white transition">Privacy</a>
-              <a href="#terms" className="text-blue-200 hover:text-white transition">Terms</a>
-              <a href="#contact" className="text-blue-200 hover:text-white transition">Contatti</a>
-            </div>
-          </div>
-        </footer>
-      </div>
+      {/* Footer minimal */}
+      <footer className="w-full bg-white border-t border-gray-200 py-6 px-4 flex items-center justify-between">
+        <p className="text-sm text-gray-500">
+          © 2024/25 Emotion Detector - Biometric System Project.
+        </p>
+        <div className="flex space-x-4 text-sm">
+          <a href="#privacy" className="text-gray-500 hover:text-gray-700 transition">Privacy</a>
+          <a href="#terms" className="text-gray-500 hover:text-gray-700 transition">Terms</a>
+          <a href="#contact" className="text-gray-500 hover:text-gray-700 transition">Contact</a>
+        </div>
+      </footer>
 
       {/* Spinner CSS */}
       <style jsx>{`
